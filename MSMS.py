@@ -1,130 +1,167 @@
 # MSMS.py - The In-Memory Prototype
 
+
+#-----------------
 # --Data Models---
+#-----------------
+
 class Student:
-    """A blueprint for student objects. Holds their info."""
+    """A blueprint for student objects. Storing student ID and name."""
     def __init__(self, student_id, name):
         self.id = student_id
         self.name = name
-        # Initialised an empty list called 'enrolled_in' to store instrument names.
+        # Store list of instruments that student is learning
         self.enrolled_in = []
 
 class Teacher:
-    """A blueprint for teacher objects."""
+    """A blueprint for teacher objects. Storing teacher ID, name and specialty """
     def __init__(self, teacher_id, name, speciality):
-        # Assign all three parameters to independant variable
         self.id = teacher_id
         self.name = name
         self.speciality = speciality
 
-# --- In-Memory Databases --
-#Global data stores and ID counters for session 
+#---------------------------
+# --- In-Memory Databases and Counters--
+#---------------------------
+
+
+#Global storage lists and incrementing ID counter
 student_db = []
 teacher_db = []
-next_student_id = 1
+next_student_id = 1   
 next_teacher_id = 1
 
+#-----------------------------------------------------
+#-------------Admin Functions---------------
+#-----------------------------------------------------
 
-#-------------The Core Helper Functions---------------
+
+def add_teacher(name, speciality):
+    """
+    Creates Teacher profile and adds it to the global database. Increments the
+    global teacher ID after profile creation.
+    """
+    global next_teacher_id
+    new_teacher = Teacher(next_teacher_id, name, speciality)
+    teacher_db.append(new_teacher)
+    next_teacher_id += 1
+    return new_teacher
+
+def list_students():
+    """Shows registered students currently in the system"""
+    print("\n--- All Registered Students ---")
+    if not student_db:
+        print("No students registered yet.")
+        return
+    for student in student_db:
+        print(f"  ID: {student.id}, Name: {student.name}, Enrolled in: {student.enrolled_in}")
+
+def list_teachers():
+    """Shows registered teachers currently in the system"""
+    print("\n--- All Registered Teachers ---")
+    if not teacher_db:
+        print("No teachers registered yet.")
+        return
+    for teacher in teacher_db:
+        print(f"  ID: {teacher.id}, Name: {teacher.name}, Speciality: {teacher.speciality}")
 
 def find_students(term):
-    """Finds students by name."""
+    """Searches for students whos name contains the input-string (case insensitive)"""
     print(f"\n--- Finding Students matching '{term}' ---")
     results = []
     
-    # Loop through student_db. If the search 'term' (case-insensitive) is in the student's name,
+    # Perform substring search across lowercase student names
     for student in student_db:
-        name_in_lower = student.name.lower()
-        term_in_lower = term.lower()
-        if term_in_lower in name_in_lower:
-            results.append(student)        # add them to your results list.
+        if term.lower() in student.name.lower():
+            results.append(student)
             
-    # Check if we found any matching students
-    if len(results) == 0:
-        #After the loop, if the results list is empty, print "No match found."
+    # search results or 'not found' notice
+    if not results:
         print("No match found.")
     else:
-        # Otherwise, print the details for each student in the results list.
         for student in results:
             print(f"  ID: {student.id}, Name: {student.name}, Enrolled in: {student.enrolled_in}")
 
 def find_teachers(term):
-    """Finds teachers by name or speciality."""
+    """Perform search on teacher name or teacher specialty (case insensitive)"""
     print(f"\n--- Finding Teachers matching '{term}' ---")
     results = []
     
-    # Similar loop to student function,  for the term in BOTH the teacher's name AND their speciality.
+    # Perform substring search across lowercase teacher names and teacher specialty
     for teacher in teacher_db:
-        name_in_lower = teacher.name.lower()
-        speciality_in_lower = teacher.speciality.lower()
-        term_in_lower = term.lower()
-        
-        if term_in_lower in name_in_lower or term_in_lower in speciality_in_lower:
+        if term.lower() in teacher.name.lower() or term.lower() in teacher.speciality.lower():
             results.append(teacher)
             
-    # Check if we found any matching teachers
-    if len(results) == 0:
-        #After the loop, if the results list is empty, print "No match found."
+    # search results or 'not found' notice
+    if not results:
         print("No match found.")
     else:
-        # Otherwise, print the details for each student in the results list.
         for teacher in results:
             print(f"  ID: {teacher.id}, Name: {teacher.name}, Speciality: {teacher.speciality}")
 
 
-
-# ---------The Front Desk Functions ------------
-
+#-----------------------------------------------
+#----User facing workflows and Front Desk  -----
+#-----------------------------------------------
 
 def find_student_by_id(student_id):
-    """A new helper to find one student by their exact ID."""
-    #Loop through student_db. If a student's ID matches student_id, return the student object.
+
+    """Looks up and returns student by their integer ID. Returns None if no matches"""
+    
     for student in student_db:
         if student.id == student_id:
             return student
-    #If the loop finishes without finding a match, return None.
+    
     return None
 
 def front_desk_register(name, instrument):
-    """High-level function to register a new student and enrol them."""
+    """Registers a new student, assigns a integer ID via auto-incrementation, enrolls student in instrument"""
     global next_student_id
-    #Create a new Student object, add it to student_db, and increment the ID.
+
+    #Creates new student and append to database
     new_student = Student(next_student_id, name)
     student_db.append(new_student)
     next_student_id += 1
     
-    #Immediately call front_desk_enrol() using the new student's ID and the provided instrument.
+   #Enrolls student using their new ID
     front_desk_enrol(new_student.id, instrument)
     print(f"Front Desk: Successfully registered '{name}' and enrolled them in '{instrument}'.")
 
 def front_desk_enrol(student_id, instrument):
-    """High-level function to enrol an existing student in a course."""
-    # Use your new find_student_by_id() helper.
+    """Enrollment of existing student to new instrument course via integer ID"""
     student = find_student_by_id(student_id)
-    #If the student is found, append the instrument to their 'enrolled_in' list.
+
+#Checks existence of integer ID before appending instrument course data 
     if student:
-        student.enrolled_in.append(instrument)
-        print(f"Front Desk: Enrolled student {student_id} in '{instrument}'.")
+        # To avoid duplicate entries for the same instrument
+        if instrument not in student.enrolled_in:
+            student.enrolled_in.append(instrument)
+            print(f"Front Desk: Enrolled student {student.id} ('{student.name}') in '{instrument}'.")
+        else:
+            print(f"Front Desk: Student {student.id} is already enrolled in '{instrument}'.")
     else:
-        #If the student is not found, print an error message like "Error: Student ID not found."
         print(f"Error: Student ID {student_id} not found.")
 
 def front_desk_lookup(term):
-    """High-level function to search everything."""
+    """Lookup function for both student and teacher records"""
     print(f"\n--- Performing lookup for '{term}' ---")
     find_students(term)
     find_teachers(term)
 
 
+#-------------------------
 # --- Main Application ---
+#-------------------------
 
 
 def main():
-    """Runs the main interactive menu for the receptionist."""
-    # Pre-populate some data for easy testing
+    """Main interactive menu for the front desk interface"""
+    # Pre-populate sample teacher data for session testing
     add_teacher("Dr. Keys", "Piano")
     add_teacher("Ms. Fret", "Guitar")
 
+
+# starting menu 
     while True:
         print("\n===== Music School Front Desk =====")
         print("1. Register New Student")
@@ -134,35 +171,57 @@ def main():
         print("5. (Admin) List all Teachers")
         print("q. Quit")
         
-        choice = input("Enter your choice: ")
+        choice = input("Enter your choice: ").strip()
 
+# option 1: register a new student and enroll them in instrument course
         if choice == '1':
-            # Prompt for student name and instrument, then call front_desk_register.
-            name = input("Enter student name: ")
-            instrument = input("Enter instrument to enrol in: ")
-            front_desk_register(name, instrument)
+            name = input("Enter student name: ").strip()
+            instrument = input("Enter instrument to enrol in: ").strip()
+            if name and instrument:
+                front_desk_register(name, instrument)
+            else:
+                print("Error: Student name and instrument cannot be blank.")
+
+# option 2: enroll existing student in a new instrument course using their integer ID           
         elif choice == '2':
-            # Prompt for student ID (as an int) and instrument, then call front_desk_enrol.
-            try:
+            try: #safe conversion of input to integer for efficient ID lookup
                 student_id = int(input("Enter student ID: "))
-                instrument = input("Enter instrument to enrol in: ")
-                front_desk_enrol(student_id, instrument)
-            except ValueError:
-                print("Invalid ID. Please enter a number.")
+                instrument = input("Enter instrument to enrol in: ").strip()
+                if instrument:
+                    front_desk_enrol(student_id, instrument)
+                else:
+                    print("Error: Instrument name cannot be blank.")
+            except ValueError: #avoids programme from crashing from non numeric input and prints error friendly message
+                print("Error: Invalid ID format. Please enter a numerical ID (e.g., 1, 2, 3).")
+
+        # look up for students and teachers by keyword        
         elif choice == '3':
-            # Prompt for a search term, then call front_desk_lookup.
-            term = input("Enter search term: ")
-            front_desk_lookup(term)
+            term = input("Enter search term: ").strip()
+            if term:
+                front_desk_lookup(term)
+            else:
+                print("Error: Search term cannot be empty.")
+
+
+        # display enrolled student records and teacher records        
         elif choice == '4':
             list_students()
+            
         elif choice == '5':
             list_teachers()
-        elif choice.lower() == 'q':
-            print("Exiting program. Goodbye!")
-            break
-        else:
-            print("Invalid choice. Please try again.")
 
-# --- Program Start ---
+        # Quit the application loop   
+        elif choice.lower() == 'q':
+            print("Exiting application. Goodbye!")
+            break
+
+        # Handle non-menu selection options    
+        else:
+            print("Invalid selection. Please enter a valid menu option (1-5 or q).")
+
+#-----------------------
+# - Program entry point -
+#----------------------
+
 if __name__ == "__main__":
     main()
