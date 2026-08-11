@@ -4,9 +4,13 @@ import json
 import datetime
 
 DATA_FILE = "msms.json"
-app_data = {} # This global dictionary will hold ALL our data.
+app_data = {} # This global dictionary will be holding all the application data
 
+#-------------------------------
 # --- Core Persistence Engine ---
+#-------------------------------
+
+
 def load_data(path=DATA_FILE):
     """Loads all application data from a JSON file."""
     global app_data
@@ -33,9 +37,88 @@ def save_data(path=DATA_FILE):
         json.dump(app_data, f, indent=4)
     print("Data saved successfully.")
 
+#-------------------------------------
+#-----Core and Reintegrated Functions--
+#-------------------------------------
 
-    # --- Full CRUD for Core Data ---
-# Note: We are now working with lists of dictionaries, not lists of objects.
+def find_student_by_id(student_id):
+    """Looks up and returns student dictionary by integer ID."""
+    for student in app_data['students']:
+        if student['id'] == student_id:
+            return student
+    return None
+
+def front_desk_register(name, instrument):
+    """Registers a new student, assigns an ID, and enrols them in an instrument."""
+    student_id = app_data['next_student_id']
+    new_student = {
+        "id": student_id,
+        "name": name,
+        "enrolled_in": []
+    }
+    app_data['students'].append(new_student)
+    app_data['next_student_id'] += 1
+    
+    # Immediately enrol student in their first instrument
+    front_desk_enrol(student_id, instrument)
+
+def front_desk_enrol(student_id, instrument):
+    """Enrols an existing student in a new instrument course."""
+    student = find_student_by_id(student_id)
+    if student:
+        if instrument not in student['enrolled_in']:
+            student['enrolled_in'].append(instrument)
+            print(f"Front Desk: Enrolled student {student['id']} ('{student['name']}') in '{instrument}'.")
+        else:
+            print(f"Front Desk: Student {student['id']} is already enrolled in '{instrument}'.")
+    else:
+        print(f"Error: Student ID {student_id} not found.")
+
+def list_students():
+    """Prints all registered students."""
+    print("\n--- All Registered Students ---")
+    if not app_data['students']:
+        print("No students registered yet.")
+        return
+    for student in app_data['students']:
+        print(f"  ID: {student['id']}, Name: {student['name']}, Enrolled in: {student.get('enrolled_in', [])}")
+
+def list_teachers():
+    """Prints all registered teachers."""
+    print("\n--- All Registered Teachers ---")
+    if not app_data['teachers']:
+        print("No teachers registered yet.")
+        return
+    for teacher in app_data['teachers']:
+        print(f"  ID: {teacher['id']}, Name: {teacher['name']}, Speciality: {teacher['speciality']}")
+
+def front_desk_lookup(term):
+    """Searches both students and teachers by keyword."""
+    print(f"\n--- Performing lookup for '{term}' ---")
+    term_lower = term.lower()
+    
+    print("Students:")
+    student_matches = [s for s in app_data['students'] if term_lower in s['name'].lower()]
+    if not student_matches:
+        print("  No student matches found.")
+    else:
+        for s in student_matches:
+            print(f"  ID: {s['id']}, Name: {s['name']}, Enrolled in: {s.get('enrolled_in', [])}")
+            
+    print("Teachers:")
+    teacher_matches = [t for t in app_data['teachers'] if term_lower in t['name'].lower() or term_lower in t['speciality'].lower()]
+    if not teacher_matches:
+        print("  No teacher matches found.")
+    else:
+        for t in teacher_matches:
+            print(f"  ID: {t['id']}, Name: {t['name']}, Speciality: {t['speciality']}")
+
+
+
+#--------------------------------
+# --- Full CRUD for Core Data ---
+#-------------------------------
+
 
 def add_teacher(name, speciality):
     """Adds a teacher dictionary to the data store."""
@@ -84,8 +167,9 @@ def remove_student(student_id):
         print(f"Error: Student with ID {student_id} not found.")
 
 
-
-# --- New Receptionist Features ---
+#-----------------------------
+# ---Receptionist Features ---
+#------------------------------
 
 def check_in(student_id, course_id, timestamp=None):
     """Records a student's attendance for a course."""
@@ -131,8 +215,91 @@ def print_student_card(student_id):
         print(f"Error: Could not print card, student {student_id} not found.")
 
 
-#test script/ main block
+#------------------------------
+# --- Main Application Loop ---
+#-----------------------------
 
-if __name__== "__main__":
-    load_data()  #loading existing data to create default structure on first run 
-    save_data() #save the initial/loaded data to msms.json
+
+def main():
+    """Main function to run the MSMS application."""
+    load_data() # Load all data from file at startup.
+
+    while True:
+        print("\n===== MSMS v2 (Persistent) =====")
+        print("1. Check-in Student")
+        print("2. Print Student Card")
+        print("3. Update Teacher Info")
+        print("4. Remove Student")
+        print("q. Quit and Save")
+        
+        choice = input("Enter your choice: ").strip()
+        
+        made_change = False # A flag to track if we need to save
+        if choice == '1':
+            try:
+                student_id = int(input("Enter student ID: "))
+                course_id = input("Enter course name/ID: ").strip()
+                if course_id:
+                    check_in(student_id, course_id)
+                    made_change = True
+                else:
+                    print("Error: Course ID cannot be empty.")
+            except ValueError:
+                print("Error: Invalid ID format. Please enter a numerical student ID.")
+
+        elif choice == '2':
+            try:
+                student_id = int(input("Enter student ID: "))
+                print_student_card(student_id)
+                # No change made to app_data, so made_change stays False
+            except ValueError:
+                print("Error: Invalid ID format. Please enter a numerical student ID.")
+
+        elif choice == '3':
+            try:
+                teacher_id = int(input("Enter teacher ID: "))
+                new_speciality = input("Enter new speciality (leave blank to skip): ").strip()
+                new_name = input("Enter new teacher name (leave blank to skip): ").strip()
+                
+                updates = {}
+                if new_speciality:
+                    updates['speciality'] = new_speciality
+                if new_name:
+                    updates['name'] = new_name
+                
+                if updates:
+                    update_teacher(teacher_id, **updates)
+                    made_change = True
+                else:
+                    print("No updates provided.")
+            except ValueError:
+                print("Error: Invalid ID format. Please enter a numerical teacher ID.")
+
+        elif choice == '4':
+            try:
+                student_id = int(input("Enter student ID to remove: "))
+                remove_student(student_id)
+                made_change = True
+            except ValueError:
+                print("Error: Invalid ID format. Please enter a numerical student ID.")
+
+        elif choice.lower() == 'q':
+            print("Saving final changes and exiting.")
+            break
+
+        else:
+            print("Invalid choice. Please select a valid menu option.")
+            
+        # Save data immediately after any modifying operation
+        if made_change:
+            save_data()
+
+    save_data() 
+
+#-----------------------
+# --- Program Start ---
+#----------------------
+
+if __name__ == "__main__":
+    main()
+
