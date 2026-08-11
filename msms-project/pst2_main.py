@@ -216,26 +216,54 @@ def print_student_card(student_id):
 
 
 #------------------------------
-# --- Main Application Loop ---
-#-----------------------------
-
+# ---Main Application Loop----
+#------------------------------
 
 def main():
-    """Main function to run the MSMS application."""
-    load_data() # Load all data from file at startup.
+    """Main function to run the persistent MSMS v2 application."""
+    load_data() # Load all data from JSON file at startup.
 
     while True:
         print("\n===== MSMS v2 (Persistent) =====")
-        print("1. Check-in Student")
-        print("2. Print Student Card")
-        print("3. Update Teacher Info")
-        print("4. Remove Student")
+        print("1. Register New Student")
+        print("2. Enrol Existing Student")
+        print("3. Check-in Student")
+        print("4. Print Student Card")
+        print("5. Lookup Student or Teacher")
+        print("6. Update Teacher Info")
+        print("7. Remove Student")
+        print("8. List All Students")
+        print("9. List All Teachers")
         print("q. Quit and Save")
         
         choice = input("Enter your choice: ").strip()
-        
-        made_change = False # A flag to track if we need to save
+        made_change = False # A flag to track if we need to save changes
+
+        # option 1:Register new student 
         if choice == '1':
+            name = input("Enter student name: ").strip()
+            instrument = input("Enter instrument to enrol in: ").strip()
+            if name and instrument:
+                front_desk_register(name, instrument)
+                made_change = True
+            else:
+                print("Error: Name and instrument cannot be blank.")
+
+        # option 2: enroll existing student
+        elif choice == '2':
+            try:
+                student_id = int(input("Enter student ID: "))
+                instrument = input("Enter instrument to enrol in: ").strip()
+                if instrument:
+                    front_desk_enrol(student_id, instrument)
+                    made_change = True
+                else:
+                    print("Error: Instrument name cannot be blank.")
+            except ValueError:
+                print("Error: Invalid ID format. Please enter a numerical ID.")
+
+        # option 3: check in student
+        elif choice == '3':
             try:
                 student_id = int(input("Enter student ID: "))
                 course_id = input("Enter course name/ID: ").strip()
@@ -245,17 +273,26 @@ def main():
                 else:
                     print("Error: Course ID cannot be empty.")
             except ValueError:
-                print("Error: Invalid ID format. Please enter a numerical student ID.")
+                print("Error: Invalid ID format. Please enter a numerical ID.")
 
-        elif choice == '2':
+        #option 4: print student card badge 
+        elif choice == '4':
             try:
                 student_id = int(input("Enter student ID: "))
                 print_student_card(student_id)
-                # No change made to app_data, so made_change stays False
             except ValueError:
-                print("Error: Invalid ID format. Please enter a numerical student ID.")
+                print("Error: Invalid ID format. Please enter a numerical ID.")
 
-        elif choice == '3':
+        # option 5: search and lookup 
+        elif choice == '5':
+            term = input("Enter search term: ").strip()
+            if term:
+                front_desk_lookup(term)
+            else:
+                print("Error: Search term cannot be empty.")
+
+        # option 6: update teacher info 
+        elif choice == '6':
             try:
                 teacher_id = int(input("Enter teacher ID: "))
                 new_speciality = input("Enter new speciality (leave blank to skip): ").strip()
@@ -273,33 +310,42 @@ def main():
                 else:
                     print("No updates provided.")
             except ValueError:
-                print("Error: Invalid ID format. Please enter a numerical teacher ID.")
+                print("Error: Invalid ID format. Please enter a numerical ID.")
 
-        elif choice == '4':
+        #option 7: remove student
+        elif choice == '7':
             try:
                 student_id = int(input("Enter student ID to remove: "))
                 remove_student(student_id)
                 made_change = True
             except ValueError:
-                print("Error: Invalid ID format. Please enter a numerical student ID.")
+                print("Error: Invalid ID format. Please enter a numerical ID.")
 
+        #option 8: list students
+        elif choice == '8':
+            list_students()
+
+        #option 9: list teachers
+        elif choice == '9':
+            list_teachers()
+
+        #option 10: quit application 
         elif choice.lower() == 'q':
             print("Saving final changes and exiting.")
             break
 
         else:
-            print("Invalid choice. Please select a valid menu option.")
+            print("Invalid choice. Please select a valid menu option (1-9 or q).")
             
-        # Save data immediately after any modifying operation
+        # save data after modifying action 
         if made_change:
             save_data()
 
-    save_data() 
+    save_data() # Save one final time on exit
 
 #-----------------------
 # --- Program Start ---
-#----------------------
+#-----------------------
 
 if __name__ == "__main__":
     main()
-
