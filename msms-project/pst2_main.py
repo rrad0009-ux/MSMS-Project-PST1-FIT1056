@@ -94,7 +94,7 @@ def list_teachers():
         print("No teachers registered yet.")
         return
     for teacher in app_data['teachers']:
-        print(f"  ID: {teacher['id']}, Name: {teacher['name']}, Speciality: {teacher['speciality']}")
+        print(f"  ID: {teacher['id']}, Name: {teacher['name']}, Speciality: {teacher.get('speciality', 'N/A')}")
 
 def front_desk_lookup(term):
     """Performs a case-insensitive search across student names, teacher names and teacher specialities"""
@@ -110,12 +110,12 @@ def front_desk_lookup(term):
             print(f"  ID: {s['id']}, Name: {s['name']}, Enrolled in: {s.get('enrolled_in', [])}")
             
     print("Teachers:")
-    teacher_matches = [t for t in app_data['teachers'] if term_lower in t['name'].lower() or term_lower in t['speciality'].lower()]
+    teacher_matches = [t for t in app_data['teachers'] if term_lower in t['name'].lower() or term_lower in t.get('speciality', '').lower()]
     if not teacher_matches:
         print("  No teacher matches found.")
     else:
         for t in teacher_matches:
-            print(f"  ID: {t['id']}, Name: {t['name']}, Speciality: {t['speciality']}")
+            print(f"  ID: {t['id']}, Name: {t['name']}, Speciality: {t.get('speciality', 'N/A')}")
 
 
 
@@ -138,8 +138,9 @@ def update_teacher(teacher_id, **fields):
         if teacher['id'] == teacher_id:
             teacher.update(fields)
             print(f"Teacher {teacher_id} updated.")
-            return
+            return True
     print(f"Error: Teacher with ID {teacher_id} not found.")
+    return False
 
 def remove_teacher(teacher_id):
     """Removes a teacher from the data store via ID by list filtering"""
@@ -148,27 +149,32 @@ def remove_teacher(teacher_id):
     
     if len(app_data['teachers']) < initial_count:
         print(f"Teacher {teacher_id} removed.")
+        return True
     else:
         print(f"Error: Teacher with ID {teacher_id} not found.")
+        return False
 
 def update_student(student_id, **fields):
-    """Updates field for a teacher matching with ID"""
+    """Updates field for a student matching with ID"""
     for student in app_data['students']:
         if student['id'] == student_id:
             student.update(fields)
             print(f"Student {student_id} updated.")
-            return
+            return True
     print(f"Error: Student with ID {student_id} not found.")
+    return False
 
 def remove_student(student_id):
-    """Removes a teacher from the data store via ID by list filtering"""
+    """Removes a student from the data store via ID by list filtering"""
     initial_count = len(app_data['students'])
     app_data['students'] = [s for s in app_data['students'] if s['id'] != student_id]
     
     if len(app_data['students']) < initial_count:
         print(f"Student {student_id} removed.")
+        return True
     else:
         print(f"Error: Student with ID {student_id} not found.")
+        return False
 
 
 #-----------------------------
@@ -234,10 +240,13 @@ def main():
         print("3. Check-in Student")
         print("4. Print Student Card")
         print("5. Lookup Student or Teacher")
-        print("6. Update Teacher Info")
-        print("7. Remove Student")
-        print("8. List All Students")
-        print("9. List All Teachers")
+        print("6. Add New Teacher")
+        print("7. Update Teacher Info")
+        print("8. Remove Teacher")
+        print("9. Update Student Info")
+        print("10. Remove Student")
+        print("11. List All Students")
+        print("12. List All Teachers")
         print("q. Quit and Save")
         
         choice = input("Enter your choice: ").strip()
@@ -295,8 +304,18 @@ def main():
             else:
                 print("Error: Search term cannot be empty.")
 
-        # option 6: update teacher info 
+        #option 6: add a new teacher 
         elif choice == '6':
+            name = input("Enter teacher name: ").strip()
+            speciality = input("Enter teacher speciality (e.g. Piano, Guitar): ").strip()
+            if name and speciality:
+                add_teacher(name, speciality)
+                made_change = True
+            else:
+                print("Error: Teacher name and speciality cannot be blank.")
+
+        # option 7: update teacher info 
+        elif choice == '7':
             try:
                 teacher_id = int(input("Enter teacher ID: "))
                 new_speciality = input("Enter new speciality (leave blank to skip): ").strip()
@@ -309,37 +328,64 @@ def main():
                     updates['name'] = new_name
                 
                 if updates:
-                    update_teacher(teacher_id, **updates)
-                    made_change = True
+                    if update_teacher(teacher_id, **updates):
+                        made_change = True
                 else:
                     print("No updates provided.")
             except ValueError:
                 print("Error: Invalid ID format. Please enter a numerical ID.")
 
-        #option 7: remove student
-        elif choice == '7':
+        # option 8: remove teacher
+        elif choice == '8':
             try:
-                student_id = int(input("Enter student ID to remove: "))
-                remove_student(student_id)
-                made_change = True
+                teacher_id = int(input("Enter teacher ID to remove: "))
+                if remove_teacher(teacher_id):
+                    made_change = True
             except ValueError:
                 print("Error: Invalid ID format. Please enter a numerical ID.")
 
-        #option 8: list students
-        elif choice == '8':
+        # option 9: update student info
+        elif choice == '9':
+            try:
+                student_id = int(input("Enter student ID: "))
+                new_name = input("Enter new student name (leave blank to skip): ").strip()
+                
+                updates = {}
+                if new_name:
+                    updates['name'] = new_name
+                
+                if updates:
+                    if update_student(student_id, **updates):
+                        made_change = True
+                else:
+                    print("No updates provided.")
+            except ValueError:
+                print("Error: Invalid ID format. Please enter a numerical ID.")
+
+        #option 10: remove student
+        elif choice == '10':
+            try:
+                student_id = int(input("Enter student ID to remove: "))
+                if remove_student(student_id):
+                    made_change = True
+            except ValueError:
+                print("Error: Invalid ID format. Please enter a numerical ID.")
+
+        #option 11: list students
+        elif choice == '11':
             list_students()
 
-        #option 9: list teachers
-        elif choice == '9':
+        #option 12: list teachers
+        elif choice == '12':
             list_teachers()
 
-        #option 10: quit application 
+        #option quit application 
         elif choice.lower() == 'q':
             print("Saving final changes and exiting.")
             break
 
         else:
-            print("Invalid choice. Please select a valid menu option (1-9 or q).")
+            print("Invalid choice. Please select a valid menu option (1-12 or q).")
             
         # save data after modifying action 
         if made_change:
