@@ -1,18 +1,22 @@
 # pst2_main.py - The Persistent Application
 
+#----------------------------------------
+# Global dictionary holding all persistent data
+#-----------------------------------------
+
 import json
 import datetime
 
 DATA_FILE = "msms.json"
 app_data = {} # This global dictionary will be holding all the application data
 
-#-------------------------------
-# --- Core Persistence Engine ---
-#-------------------------------
+#-----------------------------------------
+# File persistence and data storage 
+#-----------------------------------------
 
 
 def load_data(path=DATA_FILE):
-    """Loads all application data from a JSON file."""
+    """Loads data from JSON file into the global app_data dictionary. Makes default structure if file doesnt exist """
     global app_data
     try:
         with open(path, 'r') as f:
@@ -21,7 +25,7 @@ def load_data(path=DATA_FILE):
             print("Data loaded successfully.")
     except FileNotFoundError:
         print("Data file not found. Initializing with default structure.")
-        # Dictionary structure for starting fresh lists
+        # dictionary structure for starting fresh lists
         app_data = {
             "students": [],
             "teachers": [],
@@ -31,25 +35,25 @@ def load_data(path=DATA_FILE):
         }
 
 def save_data(path=DATA_FILE):
-    """Saves all application data to a JSON file."""
+    """Serialises and writes global app_data dictionary to JSON file"""
     # open file in write mode and format output with indent = 4 
     with open(path, 'w') as f:
         json.dump(app_data, f, indent=4)
     print("Data saved successfully.")
 
 #-------------------------------------
-#-----Core and Reintegrated Functions--
+#Student registration and lookup services
 #-------------------------------------
 
 def find_student_by_id(student_id):
-    """Looks up and returns student dictionary by integer ID."""
+    """Looks up and returns student dictionary by integer ID or None if not found"""
     for student in app_data['students']:
         if student['id'] == student_id:
             return student
     return None
 
 def front_desk_register(name, instrument):
-    """Registers a new student, assigns an ID, and enrols them in an instrument."""
+    """Registers a new student, assigns a unique integer ID, and enrols them in an initial instrument."""
     student_id = app_data['next_student_id']
     new_student = {
         "id": student_id,
@@ -63,7 +67,7 @@ def front_desk_register(name, instrument):
     front_desk_enrol(student_id, instrument)
 
 def front_desk_enrol(student_id, instrument):
-    """Enrols an existing student in a new instrument course."""
+    """Enrols an existing student's course list into a new instrument course. Prevents duplicate enrolment for same instrument"""
     student = find_student_by_id(student_id)
     if student:
         if instrument not in student['enrolled_in']:
@@ -75,7 +79,7 @@ def front_desk_enrol(student_id, instrument):
         print(f"Error: Student ID {student_id} not found.")
 
 def list_students():
-    """Prints all registered students."""
+    """Displays all registerd students their assigned integer ID and enrolled instrument course"""
     print("\n--- All Registered Students ---")
     if not app_data['students']:
         print("No students registered yet.")
@@ -84,7 +88,7 @@ def list_students():
         print(f"  ID: {student['id']}, Name: {student['name']}, Enrolled in: {student.get('enrolled_in', [])}")
 
 def list_teachers():
-    """Prints all registered teachers."""
+    """Shows all registered teachers their assigned integer ID and specialities"""
     print("\n--- All Registered Teachers ---")
     if not app_data['teachers']:
         print("No teachers registered yet.")
@@ -93,7 +97,7 @@ def list_teachers():
         print(f"  ID: {teacher['id']}, Name: {teacher['name']}, Speciality: {teacher['speciality']}")
 
 def front_desk_lookup(term):
-    """Searches both students and teachers by keyword."""
+    """Performs a case-insensitive search across student names, teacher names and teacher specialities"""
     print(f"\n--- Performing lookup for '{term}' ---")
     term_lower = term.lower()
     
@@ -116,12 +120,12 @@ def front_desk_lookup(term):
 
 
 #--------------------------------
-# --- Full CRUD for Core Data ---
+# Administrative data management (CRUD OPERATIONS) 
 #-------------------------------
 
 
 def add_teacher(name, speciality):
-    """Adds a teacher dictionary to the data store."""
+    """Adds a teacher dictionary to the data store with auto incremented ID"""
     teacher_id = app_data['next_teacher_id']
     new_teacher = {"id": teacher_id, "name": name, "speciality": speciality}
     app_data['teachers'].append(new_teacher)
@@ -129,7 +133,7 @@ def add_teacher(name, speciality):
     print(f"Core: Teacher '{name}' added.")
 
 def update_teacher(teacher_id, **fields):
-    """Finds a teacher by ID and updates their data with provided fields."""
+    """Updates field for a teacher matching with ID"""
     for teacher in app_data['teachers']:
         if teacher['id'] == teacher_id:
             teacher.update(fields)
@@ -138,7 +142,7 @@ def update_teacher(teacher_id, **fields):
     print(f"Error: Teacher with ID {teacher_id} not found.")
 
 def remove_teacher(teacher_id):
-    """Removes a teacher from the data store."""
+    """Removes a teacher from the data store via ID by list filtering"""
     initial_count = len(app_data['teachers'])
     app_data['teachers'] = [t for t in app_data['teachers'] if t['id'] != teacher_id]
     
@@ -148,7 +152,7 @@ def remove_teacher(teacher_id):
         print(f"Error: Teacher with ID {teacher_id} not found.")
 
 def update_student(student_id, **fields):
-    """Finds a student by ID and updates their data with provided fields."""
+    """Updates field for a teacher matching with ID"""
     for student in app_data['students']:
         if student['id'] == student_id:
             student.update(fields)
@@ -157,7 +161,7 @@ def update_student(student_id, **fields):
     print(f"Error: Student with ID {student_id} not found.")
 
 def remove_student(student_id):
-    """Removes a student from the data store."""
+    """Removes a teacher from the data store via ID by list filtering"""
     initial_count = len(app_data['students'])
     app_data['students'] = [s for s in app_data['students'] if s['id'] != student_id]
     
@@ -168,11 +172,11 @@ def remove_student(student_id):
 
 
 #-----------------------------
-# ---Receptionist Features ---
+# Front desk and badge generation
 #------------------------------
 
 def check_in(student_id, course_id, timestamp=None):
-    """Records a student's attendance for a course."""
+    """Records attendence check in with an ISO timestamp and appends it the persistent attendance ledger"""
     if timestamp is None:
         # Get the current time as an ISO formatted string
         timestamp = datetime.datetime.now().isoformat()
@@ -189,7 +193,7 @@ def check_in(student_id, course_id, timestamp=None):
     print(f"Receptionist: Student {student_id} checked into {course_id}.")
 
 def print_student_card(student_id):
-    """Creates a text file badge for a student."""
+    """Generates and saves student ID badge file locally. Formatted to plain text"""
     # Find the student dictionary in app_data['students']
     student_to_print = None
     for s in app_data['students']:
@@ -216,11 +220,11 @@ def print_student_card(student_id):
 
 
 #------------------------------
-# ---Main Application Loop----
+# User interface and Interactive loop
 #------------------------------
 
 def main():
-    """Main function to run the persistent MSMS v2 application."""
+    """Main application controller loop managing user interaction and trigger persistence saves"""
     load_data() # Load all data from JSON file at startup.
 
     while True:
@@ -344,7 +348,7 @@ def main():
     save_data() # Save one final time on exit
 
 #-----------------------
-# --- Program Start ---
+# Application runtime entry 
 #-----------------------
 
 if __name__ == "__main__":
