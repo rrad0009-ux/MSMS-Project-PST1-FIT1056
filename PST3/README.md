@@ -62,8 +62,7 @@ In PST2, the main menu displayed a flat list of 10 options, which felt crowded a
 **How to run the program**
 
 *Prerequisites*
-Python 3.8 or above installed
-Terminal or command line access
+Python 3.8
 
 *Execution*
 Open your terminal, make sure you are in the PST3 project directory, and launch the view layer:
