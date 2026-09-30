@@ -1,13 +1,14 @@
+# gui/main_dashboard.py
 #=============
 #MAIN APPLICATION DASHBOARD AND VIEW LAYER
 #=============
-
 
 #top level window config, state persistance, navigation
 
 import streamlit as st
 from app.schedule import ScheduleManager
 from gui.student_pages import show_student_management_page
+from gui.teacher_pages import show_teacher_management_page
 from gui.roster_pages import show_roster_page
 
 def launch():
@@ -16,16 +17,25 @@ def launch():
 
     if 'manager' not in st.session_state:
         st.session_state.manager = ScheduleManager() #initialise schedulemanager once inside session_state
-                                                    #storing and controller inside st.session_state ensuring in-memory 
+                                                    #storing controller inside st.session_state ensuring in-memory 
                                                     # records and JSON data persists as the receptionist switches pages 
 
     st.sidebar.title("MSMS Navigation")
-    page = st.sidebar.radio("Go to", ["Student Management", "Daily Roster", "Payments (stub)"]) #sidebar nabigation
+    page = st.sidebar.radio("Go to", [
+        "Student Management", 
+        "Teacher Management", 
+        "Daily Roster", 
+        "Payments (stub)"
+    ]) #sidebar navigation options
 
-    if page == "Student Management": #view routing
+    # view routing
+    if page == "Student Management":
         show_student_management_page(st.session_state.manager)
+    elif page == "Teacher Management":
+        show_teacher_management_page(st.session_state.manager)
     elif page == "Daily Roster": #displays daily lesson schedules and interactive student check in processing
         show_roster_page(st.session_state.manager)
     elif page == "Payments (stub)": 
         st.header("Payments")
         st.warning("This feature will be implemented in PST5.")
+        
