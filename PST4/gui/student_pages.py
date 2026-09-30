@@ -7,24 +7,36 @@ def show_student_management_page(manager):
 
     # --- Search Section (remains the same) ---
     st.subheader("Find a Student")
-    # ...
+    search_term = st.text_input("Enter student name or ID to search")
+    if search_term: #performs case insensitive search across studentuser objects 
+        results = [
+            s for s in manager.students 
+            if search_term.lower() in s.name.lower() or str(s.id) == search_term.strip()
+        ]
+        if results:
+            st.write(f"Found {len(results)} matching student(s):")
+            for student in results:
+                st.write(f"- **ID:** {student.id} | **Name:** {student.name} | **Enrolled Courses:** {student.enrolled_course_ids}")
+        else:
+            st.info("No matching students found.")
+
+    st.divider()
 
     # --- Registration Section (now works correctly) ---
-    st.subheader("Register New Student")
+    st.subheader("Register New Student")  #streamlit creates typing in input boxes (form batch block )
     with st.form("registration_form"):
         reg_name = st.text_input("New Student Name")
         reg_instrument = st.text_input("First Instrument")
         submitted = st.form_submit_button("Register Student")
         
-        if submitted:
-            # This call now works because we implemented the method in PST3.
-            # TODO: Add a check for blank name/instrument.
-            if reg_name and reg_instrument:
-                new_student = manager.register_new_student(reg_name, reg_instrument)
+        if submitted: #maintains input validation (guardrail for fields not being blank)
+            if reg_name.strip() and reg_instrument.strip():
+                # Call ScheduleManager to register student
+                new_student = manager.register_student(reg_name.strip())
                 if new_student:
-                    st.success(f"Successfully registered {reg_name}!")
-                    # You can use st.balloons() for extra flair.
+                    st.success(f"Successfully registered {new_student.name} with ID {new_student.id}!")
+                    st.balloons()
                 else:
-                    st.error(f"Could not register student. A teacher for {reg_instrument} might not be available.")
+                    st.error("Could not register student. Please check inputs.")
             else:
                 st.warning("Please enter both a name and an instrument.")
