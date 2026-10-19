@@ -1,34 +1,48 @@
+# app/schedule.py
 import json
+import csv
+import datetime
+import logging  # Import logging module
 from app.student import StudentUser
-# Corrected Import: TeacherUser and Course now come from the same file.
 from app.teacher import TeacherUser, Course
 
 class ScheduleManager:
-    """The main controller for all business logic and data handling."""
-    def __init__(self, data_path="data/msms.json"):
-        self.data_path = data_path
-        self.students = []
-        self.teachers = []
-        self.courses = []
-        self.next_lesson_id = 1
-        self._load_data()
+    # ... __init__, _load_data, _save_data ...
 
-    def _load_data(self):
-        """Loads data from the JSON file and populates the object lists."""
-        try:
-            with open(self.data_path, 'r') as f:
-                data = json.load(f)
-                # The logic here remains the same, but the source of the Course class has changed.
-                # TODO: For each dictionary in data['students'], create a StudentUser object and append to self.students.
-                # TODO: Do the same for teachers (creating TeacherUser objects).
-                # TODO: Do the same for courses (creating Course objects).
-        except FileNotFoundError:
-            print("Data file not found. Starting with a clean state.")
-    
-    def _save_data(self):
-        """Converts object lists back to dictionaries and saves to JSON."""
-        # The logic here remains the same.
-        # TODO: Create a 'data_to_save' dictionary.
-        # Convert self.students, self.teachers, and self.courses into lists of dictionaries.
-        # Write the result to the JSON file.
-        pass
+    def register_student(self, name):
+        """Registers a new student and logs the event."""
+        student_id = len(self.students) + 1
+        new_student = StudentUser(student_id, name)
+        self.students.append(new_student)
+        self._save_data()
+        
+        # PST5: Log business event
+        logging.info(f"Registered new student '{name}' with Assigned ID {student_id}.")
+        return new_student
+
+    def record_payment(self, student_id, amount, method):
+        """Records a payment entry and logs the transaction."""
+        student = self.find_student_by_id(student_id)
+        if not student:
+            logging.warning(f"Payment failed: Student ID {student_id} not found.")
+            return None
+
+        payment_record = {
+            "student_id": student_id,
+            "amount": float(amount),
+            "method": method,
+            "timestamp": datetime.datetime.now().isoformat()
+        }
+        self.finance_log.append(payment_record)
+        self._save_data()
+        
+        # PST5: Log financial transaction
+        logging.info(f"Payment of ${amount:.2f} recorded for Student ID {student_id} via {method}.")
+        return payment_record
+
+    def cancel_lesson(self, lesson_id, reason="Unspecified"):
+        """Cancels a scheduled lesson and logs a warning."""
+        # PST5: Log business warning event
+        logging.warning(f"Lesson ID {lesson_id} was cancelled. Reason: {reason}")
+        self._save_data()
+        

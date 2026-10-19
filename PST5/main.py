@@ -1,14 +1,15 @@
 # main.py
+import logging
 from gui.main_dashboard import launch
-# TODO: Import the new admin utilities.
 from app.admin_utils import init_logger, backup_data
 
 if __name__ == "__main__":
-    # TODO: Initialize the logger as the very first step.
+    # 1. Initialize logger as the very first step
     init_logger()
-
-    # TODO: Perform a data backup before starting the application session.
+    
+    # 2. Perform automated data backup before starting session
     backup_data()
-
-    # TODO: Launch the GUI as before.
+    
+    # 3. Launch interactive Streamlit GUI
     launch()
+    
