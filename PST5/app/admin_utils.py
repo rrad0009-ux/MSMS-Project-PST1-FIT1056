@@ -20,10 +20,8 @@ def backup_data(data_path="data/msms.json", backup_dir="data/backups"):
         logging.warning(f"Backup skipped: Source file '{data_path}' does not exist.")
         return None
 
-    # Ensure the backup directory exists
     os.makedirs(backup_dir, exist_ok=True)
 
-    # Generate timestamped filename (e.g., msms_backup_20261019_223000.json)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     backup_filename = f"msms_backup_{timestamp}.json"
     destination_path = os.path.join(backup_dir, backup_filename)
@@ -31,10 +29,8 @@ def backup_data(data_path="data/msms.json", backup_dir="data/backups"):
     try:
         shutil.copy2(data_path, destination_path)
         logging.info(f"Data backup created successfully at: {destination_path}")
-        print(f"Backup created: {destination_path}")
         return destination_path
     except Exception as e:
         logging.error(f"Failed to create data backup: {e}")
-        print(f"Error during backup: {e}")
         return None
     
